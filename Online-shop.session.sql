@@ -1,3 +1,4 @@
+-- Создание таблиц
 CREATE TABLE Addresses (
     address_id SERIAL PRIMARY KEY,
     country VARCHAR(20) NOT NULL,
