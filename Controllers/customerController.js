@@ -2,6 +2,7 @@ const pool = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const keys = require('../config/keys');
+const { json } = require('express');
 
 class CustomerController {
     async registration(req, res) {
@@ -75,18 +76,11 @@ class CustomerController {
     async update(req, res) {
         try {
             const { country, region, disrict, city, street, house, postcode } = req.body.address;
-
             const { first_name, last_name, patronymic, gender, email, phone } = req.body.personData;
-
             const userID = req.user;
 
             const resulQuery = await pool.query("SELECT address_id FROM customers WHERE authorization_data_id = $1", [userID]);
-
-            console.log(resulQuery);
-
             const { address_id } = resulQuery.rows[0];
-
-            console.log(address_id);
             
             if (address_id === null) {
                 await pool.query("INSERT INTO addresses (country, region, district, city, street, house, postcode) VALUES ($1, $2, $3, $4, $5, $6, $7);", [country, region, disrict, city, street, house, postcode]);
@@ -105,6 +99,19 @@ class CustomerController {
 
                 massage: 'Что-то пошло не так :('
             });
+        }
+    }
+    async get(req, res) {
+        try {
+            const userID = req.user;
+
+            const resultQuery = await pool.query("SELECT customers.customer_id, customers.first_name, customers.last_name, customers.patronymic, customers.gender, customers.email, customers.phone, authorization_data.login, authorization_data.hashpass, authorization_data.salt, authorization_data.role, authorization_data.registration_date, authorization_data.last_authorization_date FROM customers INNER JOIN authorization_data ON customers.authorization_data_id = authorization_data.authorization_data_id WHERE customers.authorization_data_id = $1", [userID]);
+
+            res.json(resultQuery.rows);
+
+        } catch (err) {
+            console.log(err);
+            req.json({massage: 'Что-то пошло не так :('});
         }
     }
 }

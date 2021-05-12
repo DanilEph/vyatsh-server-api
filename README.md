@@ -17,7 +17,7 @@
 3. http://localhost:8080/api/customer/getAll -- Показать всех клиентов
 Отправляет json c информацией о всех зарегистрированных клиентах. Запрос выполнится только если авторизированный пользователь, отправляющий его, является сотрудником (имеет в токине role: employee).
 
-4. http://localhost:8080/api/customer/update -- Обновить данные о пользователе
+4. http://localhost:8080/api/customer/update -- Обновить данные пользователя (только для customer и employee)
 Принемает json следующего типа:
 {
   "address": {
@@ -38,3 +38,5 @@
         "phone": ""
     }
 }
+
+5. http://localhost:8080/api/customer/get -- Получить всю информацию одного пользователя (только для customer и employee)

@@ -372,13 +372,20 @@ FROM customers
 INNER JOIN authorization_data
 ON customers.authorization_data_id = authorization_data.authorization_data_id;
 
+-- Получение одного польователя
+SELECT customers.customer_id, customers.first_name, customers.last_name, customers.patronymic, customers.gender, customers.email, customers.phone, authorization_data.login, authorization_data.hashpass, authorization_data.salt, authorization_data.role, authorization_data.registration_date, authorization_data.last_authorization_date
+FROM customers
+INNER JOIN authorization_data
+ON customers.authorization_data_id = authorization_data.authorization_data_id
+WHERE customers.authorization_data_id = '4';
+
  ------------------------------------
 
 SELECT * FROM authorization_data;
 SELECT * FROM customers;
 SELECT * FROM employees;
 SELECT * FROM positions;
-SELECT * FROM addresses
+SELECT * FROM addresses;
 
 ALTER TABLE employees
 ALTER COLUMN address_id TYPE INT,
