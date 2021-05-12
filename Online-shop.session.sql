@@ -40,11 +40,13 @@ CREATE TABLE Customers (
 
     CONSTRAINT fk_address
     FOREIGN KEY(address_id)
-    REFERENCES Addresses(address_id),
+    REFERENCES Addresses(address_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_authorization_data
     FOREIGN KEY(authorization_data_id)
     REFERENCES Authorization_data(authorization_data_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Employees (
@@ -61,15 +63,18 @@ CREATE TABLE Employees (
 
     CONSTRAINT fk_address
     FOREIGN KEY(address_id)
-    REFERENCES Addresses(address_id),
+    REFERENCES Addresses(address_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_authorization_data
     FOREIGN KEY(authorization_data_id)
-    REFERENCES Authorization_data(authorization_data_id),
+    REFERENCES Authorization_data(authorization_data_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_position
     FOREIGN KEY(position_id)
     REFERENCES Positions(position_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Suppliers (
@@ -81,6 +86,7 @@ CREATE TABLE Suppliers (
     CONSTRAINT fk_address
     FOREIGN KEY(address_id)
     REFERENCES Addresses(address_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Agents (
@@ -96,6 +102,7 @@ CREATE TABLE Agents (
     CONSTRAINT fk_supplier
     FOREIGN KEY(supplier_id)
     REFERENCES Suppliers(supplier_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Measure_units (
@@ -119,11 +126,13 @@ CREATE TABLE Category_hierarchy (
 
     CONSTRAINT fk_category_hierarchy
     FOREIGN KEY(category_hierarchy_id)
-    REFERENCES Category(category_id),
+    REFERENCES Category(category_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_subcategory_hierarchy
     FOREIGN KEY(subcategory_hierarchy_id)
     REFERENCES Category(category_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Products (
@@ -138,15 +147,18 @@ CREATE TABLE Products (
 
     CONSTRAINT fk_supplier
     FOREIGN KEY(supplier_id)
-    REFERENCES Suppliers(supplier_id),
+    REFERENCES Suppliers(supplier_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_category
     FOREIGN KEY(category_id)
-    REFERENCES Category(category_id),
+    REFERENCES Category(category_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_measure_unit
     FOREIGN KEY(measure_unit_id)
     REFERENCES Measure_units(measure_unit_id)
+    ON DELETE SET NULL
 
 );
 
@@ -159,6 +171,7 @@ CREATE TABLE Product_photos (
     CONSTRAINT fk_product_id
     FOREIGN KEY(product_id)
     REFERENCES Products(product_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Price_periods (
@@ -176,11 +189,13 @@ CREATE TABLE Price_lists (
 
     CONSTRAINT fk_price_period
     FOREIGN KEY(price_period_id)
-    REFERENCES Price_periods(price_period_id),
+    REFERENCES Price_periods(price_period_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_product
     FOREIGN KEY(product_id)
     REFERENCES Products(product_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Deliveries (
@@ -209,19 +224,23 @@ CREATE TABLE Orders (
 
     CONSTRAINT fk_customer
     FOREIGN KEY(customer_id)
-    REFERENCES Customers(customer_id),
+    REFERENCES Customers(customer_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_employee
     FOREIGN KEY(employee_id)
-    REFERENCES Employees(employee_id),
+    REFERENCES Employees(employee_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_delivery
     FOREIGN KEY(delivery_id)
-    REFERENCES Deliveries(delivery_id),
+    REFERENCES Deliveries(delivery_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_status
     FOREIGN KEY(status_id)
     REFERENCES Statuses(status_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Orders_Products (
@@ -235,11 +254,13 @@ CREATE TABLE Orders_Products (
 
     CONSTRAINT fk_order
     FOREIGN KEY(order_id)
-    REFERENCES Orders(order_id),
+    REFERENCES Orders(order_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_product
     FOREIGN KEY(product_id)
     REFERENCES Products(product_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Shopping_carts (
@@ -250,6 +271,7 @@ CREATE TABLE Shopping_carts (
     CONSTRAINT fk_customer
     FOREIGN KEY(customer_id)
     REFERENCES Customers(customer_id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE Shopping_carts_Products(
@@ -262,11 +284,13 @@ CREATE TABLE Shopping_carts_Products(
 
     CONSTRAINT fk_shopping_cart
     FOREIGN KEY(shopping_cart_id)
-    REFERENCES Shopping_carts(shopping_cart_id),
+    REFERENCES Shopping_carts(shopping_cart_id)
+    ON DELETE SET NULL,
 
     CONSTRAINT fk_product_id
     FOREIGN KEY(product_id)
     REFERENCES Products(product_id)
+    ON DELETE SET NULL
 );
 
 -- Удаление всех таблиц в правильном порядке
@@ -379,6 +403,14 @@ INNER JOIN authorization_data
 ON customers.authorization_data_id = authorization_data.authorization_data_id
 WHERE customers.authorization_data_id = '4';
 
+-- Удаление конкретного пользователя
+
+DELETE FROM addresses
+WHERE address_id = (SELECT address_id FROM customers WHERE authorization_data_id = 3);
+DELETE FROM customers
+WHERE authorization_data_id = 3;
+DELETE FROM authorization_data
+WHERE authorization_data_id = 3;
  ------------------------------------
 
 SELECT * FROM authorization_data;
@@ -394,10 +426,3 @@ ALTER COLUMN authorization_data_id TYPE INT;
 
 ALTER TABLE authorization_data
 ADD COLUMN role VARCHAR(20) NOT NULL;
-
-DELETE FROM customers
-WHERE authorization_data_id = 19;
-DELETE FROM authorization_data
-WHERE authorization_data_id = 21;
-DELETE FROM addresses
-WHERE address_id IN(5,6,7)

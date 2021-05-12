@@ -101,6 +101,7 @@ class CustomerController {
             });
         }
     }
+
     async get(req, res) {
         try {
             const userID = req.user;
@@ -113,6 +114,18 @@ class CustomerController {
             console.log(err);
             req.json({massage: 'Что-то пошло не так :('});
         }
+    }
+
+    async delete(req, res) {
+        const userID = req.user;
+
+        await pool.query("DELETE FROM addresses WHERE address_id = (SELECT address_id FROM customers WHERE authorization_data_id = $1)", [userID]);
+
+        await pool.query("DELETE FROM customers WHERE authorization_data_id = $1", [userID]);
+
+        await pool.query("DELETE FROM authorization_data WHERE authorization_data_id = $1", [userID]);
+
+        res.json({massage: 'Удаление вашей учетной записи вмести со всеми данными было выполненно успешно!'});
     }
 }
 
