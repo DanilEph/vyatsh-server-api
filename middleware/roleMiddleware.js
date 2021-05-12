@@ -13,7 +13,8 @@ module.exports = (roles) => {
                 throw '';
             }
 
-            const { role: userRole } = jwt.verify(token, jwtKey);
+            const { role: userRole, userID} = jwt.verify(token, jwtKey);
+            req.user = userID;
             let hasRole = false;
 
             if (roles.includes(userRole)){

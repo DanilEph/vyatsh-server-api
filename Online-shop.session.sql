@@ -305,29 +305,57 @@ VALUES (
     );
 
 -- Регестрация пользователя (2-ой этап) - внесение дополнительной информации
-INSERT INTO addresses
-VALUES ('country', 'region', 'district', 'city', 'street', 'house', 'postcode')
+SELECT address_id
+FROM customers
+WHERE authorization_data_id = '4';
+      
+-- Если адрес не создавался ранее:
+INSERT INTO addresses (country, region, district, city, street, house, postcode)
+VALUES ('Россия', 'Ставропольск', 'Благодарнен', 'Благодарный', 'Чапаева', '228', '356420');
 
 UPDATE customers
 SET address_id = (
     SELECT address_id 
     FROM addresses
-    WHERE country = ''
-    AND region = ''
-    AND district = ''
-    AND city = ''
-    AND street = ''
-    AND house = ''
-    AND postcode = ''),
+    WHERE country = 'Россия'
+    AND region = 'Ставропольск'
+    AND district = 'Благодарнен'
+    AND city = 'Благодарный'
+    AND street = 'Чапаева'
+    AND house = '228'
+    AND postcode = '356420'),
 
-    first_name = '',
-    last_name = '',
-    patronymic = '',
-    gender = '',
-    e-mail = '',
-    phone = ''
+    first_name = 'Александр',
+    last_name = 'Лаптопов',
+    patronymic = 'Андреевич',
+    gender = 'мужской',
+    email = 'alexander@bk.ru',
+    phone = '89053334541'
 
-WHERE customer_id = '';
+WHERE authorization_data_id = 4;
+
+-- Если адрес создавался ранее:
+UPDATE addresses
+SET country = 'USA',
+    region = 'dfdfdf',
+    district = 'dfdfd',
+    city = 'dfdf',
+    street = 'dfdf',
+    house = '34',
+    postcode = '234234'
+WHERE 
+address_id = 4;
+
+UPDATE customers
+SET 
+    first_name = 'Александр',
+    last_name = 'Лаптопов',
+    patronymic = 'Андреевич',
+    gender = 'мужской',
+    email = 'alexander@bk.ru',
+    phone = '89053334541'
+
+WHERE authorization_data_id = 4;
 
 -- Добавление новой должности
 INSERT INTO positions (position_name, description, responsobilities)
@@ -350,6 +378,7 @@ SELECT * FROM authorization_data;
 SELECT * FROM customers;
 SELECT * FROM employees;
 SELECT * FROM positions;
+SELECT * FROM addresses
 
 ALTER TABLE employees
 ALTER COLUMN address_id TYPE INT,
@@ -363,3 +392,5 @@ DELETE FROM customers
 WHERE authorization_data_id = 19;
 DELETE FROM authorization_data
 WHERE authorization_data_id = 21;
+DELETE FROM addresses
+WHERE address_id IN(5,6,7)

@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const keys = require('../config/keys');
 
-
 class CustomerController {
     async registration(req, res) {
         try {
@@ -71,6 +70,42 @@ class CustomerController {
 
         res.json(allData.rows);      
         
+    }
+
+    async update(req, res) {
+        try {
+            const { country, region, disrict, city, street, house, postcode } = req.body.address;
+
+            const { first_name, last_name, patronymic, gender, email, phone } = req.body.personData;
+
+            const userID = req.user;
+
+            const resulQuery = await pool.query("SELECT address_id FROM customers WHERE authorization_data_id = $1", [userID]);
+
+            console.log(resulQuery);
+
+            const { address_id } = resulQuery.rows[0];
+
+            console.log(address_id);
+            
+            if (address_id === null) {
+                await pool.query("INSERT INTO addresses (country, region, district, city, street, house, postcode) VALUES ($1, $2, $3, $4, $5, $6, $7);", [country, region, disrict, city, street, house, postcode]);
+
+                await pool.query("UPDATE customers SET address_id = (SELECT address_id FROM addresses WHERE country = $1 AND region = $2 AND district = $3 AND city = $4 AND street = $5 AND house = $6 AND postcode = $7), first_name = $8, last_name = $9,    patronymic = $10, gender = $11, email = $12, phone = $13 WHERE authorization_data_id = $14;", [country, region, disrict, city, street, house, postcode, first_name, last_name, patronymic, gender, email, phone, userID]);
+                
+            } else if (address_id !== null) {
+                await pool.query("UPDATE addresses SET country = $1, region = $2, district = $3, city = $4, street = $5, house = $6, postcode = $7 WHERE address_id = $8", [country, region, disrict, city, street, house, postcode, address_id]);
+
+                await pool.query("UPDATE customers SET first_name = $1, last_name = $2, patronymic = $3, gender = $4, email = $5, phone = $6 WHERE authorization_data_id = $7", [first_name, last_name, patronymic, gender, email, phone, userID]);
+            }
+            res.json({massage: 'Ваши данные были успешно заменены'});
+        } catch (err) {
+            console.log(err);
+            res.json({
+
+                massage: 'Что-то пошло не так :('
+            });
+        }
     }
 }
 
