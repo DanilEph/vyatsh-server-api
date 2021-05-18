@@ -1,8 +1,5 @@
 const pool = require('../db');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const keys = require('../config/keys');
-const { json } = require('express');
 
 class CustomerController {
     async registration(req, res) {
@@ -15,11 +12,7 @@ class CustomerController {
            
             await pool.query("INSERT INTO authorization_data (login, hashpass, salt, role, registration_date) VALUES ($1, $2, $3, $4, current_timestamp)", [login, hashpass, salt, role]);
 
-            if (role === 'customer') {
-                await pool.query("INSERT INTO customers(authorization_data_id) VALUES ((SELECT authorization_data_id FROM authorization_data WHERE login = $1 AND hashpass = $2))", [login, hashpass]);
-            } else if (role === 'employee') {
-                await pool.query("INSERT INTO employees(authorization_data_id, position_id) VALUES ((SELECT authorization_data_id FROM authorization_data WHERE login = $1 AND hashpass = $2), (SELECT position_id FROM positions WHERE position_name = $3))", [login, hashpass, position]);
-            }
+            await pool.query("INSERT INTO customers(authorization_data_id) VALUES ((SELECT authorization_data_id FROM authorization_data WHERE login = $1 AND hashpass = $2))", [login, hashpass]);
 
             res.json({
                 massage: 'Поздравляем, вы зарегистированы!'
@@ -31,39 +24,6 @@ class CustomerController {
                 massage: 'К сожалению, регистрация не прошла...'
             });
         }
-    }
-
-    async login(req, res) {
-        try {
-            const { login, pass } = req.body;
-
-            const personData = await pool.query("SELECT authorization_data_id, salt, hashpass, role FROM authorization_data WHERE login = $1", [login]);            
-            const { authorization_data_id: authId, salt, hashpass: hashpassDB, role } = personData.rows[0];            
-            const passTrue = bcrypt.compareSync(pass, hashpassDB);
-
-            if (passTrue) {
-                const token = jwt.sign({
-                    userID: authId,
-                    login: login,
-                    role: role
-
-                }, keys.jwt, {expiresIn: 60 * 60});
-
-                res.json({
-                    token: `Bearer ${token}`,
-                    massage: 'Авротризация прошла успешно!'
-                });
-            } else {                
-                throw 'error';
-            }
-
-        } catch (err) {
-            res.json({
-                massage: 'Не правильный логин или пароль...'
-            });
-            console.log(err);
-        }
-
     }
 
     async getAll(req, res) {

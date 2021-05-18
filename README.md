@@ -40,3 +40,43 @@
 }
 
 5. http://localhost:8080/api/customer/get -- Получить всю информацию одного пользователя (только для customer и employee)
+
+6. http://localhost:8080/api/customer/get -- Удаление всей информации пользователей (только для customer)
+
+7.http://localhost:8080/api/supplier (get) -- Добавление нового поставщика
+
+{
+	"supplier": {
+    	"company_name": "",
+      	"company_status": ""
+    },
+  	"address": {
+    	"country": "",
+      	"region": "",
+      	"district": "",
+      	"city": "",
+      	"street": "",
+      	"house": "",
+      	"postcode": ""
+    }
+}
+
+8. http://localhost:8080/api/category (post)
+{
+	"categoryName": "",
+  	"description": "",
+  	"features": "",
+  	"parentCategory": ""
+}
+
+9. http://localhost:8080/api/product (post)
+{ 	"supplierId": "",
+ 	"categoryId": "", 
+ 	"measureUnitId": "",
+ 	"productName": "",
+ 	"available": "",
+ 	"description": "",
+ 	"storageConditions": "",
+ 	"altPhotoText": "",
+    "img": <файл в формате png>
+}

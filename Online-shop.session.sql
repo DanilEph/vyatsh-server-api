@@ -132,7 +132,7 @@ CREATE TABLE Category_hierarchy (
     CONSTRAINT fk_subcategory_hierarchy
     FOREIGN KEY(subcategory_hierarchy_id)
     REFERENCES Category(category_id)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
 );
 
 CREATE TABLE Products (
@@ -165,6 +165,7 @@ CREATE TABLE Products (
 CREATE TABLE Product_photos (
     product_photo_id SERIAL PRIMARY KEY,
     product_id INT NOT NULL,
+    photo_name VARCHAR UNIQUE NOT NULL,
     url TEXT UNIQUE NOT NULL,
     alternative_text VARCHAR(255) NOT NULL,
 
@@ -411,6 +412,14 @@ DELETE FROM customers
 WHERE authorization_data_id = 3;
 DELETE FROM authorization_data
 WHERE authorization_data_id = 3;
+
+-- Удаление конкретного сотрудника
+DELETE FROM addresses
+WHERE address_id = (SELECT address_id FROM employees WHERE authorization_data_id = 8);
+DELETE FROM employees
+WHERE authorization_data_id = 8;
+DELETE FROM authorization_data
+WHERE authorization_data_id = 8;
  ------------------------------------
 
 SELECT * FROM authorization_data;
@@ -418,6 +427,12 @@ SELECT * FROM customers;
 SELECT * FROM employees;
 SELECT * FROM positions;
 SELECT * FROM addresses;
+SELECT * FROM measure_units;
+SELECT * FROM suppliers;
+SELECT * FROM category;
+SELECT * FROM category_hierarchy;
+SELECT * FROM products;
+SELECT * FROM product_photos;
 
 ALTER TABLE employees
 ALTER COLUMN address_id TYPE INT,
@@ -426,3 +441,170 @@ ALTER COLUMN authorization_data_id TYPE INT;
 
 ALTER TABLE authorization_data
 ADD COLUMN role VARCHAR(20) NOT NULL;
+
+DELETE FROM addresses
+WHERE address_id in (5, 6, 7, 8);
+DELETE FROM category;
+
+-- Вся информация по сотрудникам
+SELECT employees.employee_id, positions.position_name, employees.first_name, employees.last_name, employees.patronymic, employees.gender, employees.email, employees.phone, authorization_data.login, authorization_data.hashpass, authorization_data.salt, authorization_data.role, authorization_data.registration_date, authorization_data.last_authorization_date 
+FROM employees 
+INNER JOIN authorization_data 
+ON employees.authorization_data_id = authorization_data.authorization_data_id 
+INNER JOIN positions
+ON employees.position_id = positions.position_id
+WHERE employees.authorization_data_id = 7;
+
+-- *** ЕДИНИЦЫ ИЗМЕРЕНИЯ *** --
+
+-- Добавление новых единиц измерение
+INSERT INTO measure_units(measure_name)
+VALUES ('штуки');
+
+-- Получение конкретной единицу измерения
+SELECT * 
+FROM measure_units 
+WHERE measure_unit_id = 1;
+
+-- Удалить конкретную единицу измерения
+DELETE FROM measure_units
+WHERE measure_unit_id = 1;
+
+-- Получить все единицы измерения
+SELECT *
+FROM measure_units
+
+-- *** ПОСТАВЩИКИ *** --
+
+-- Добавление нового поставщика
+    SELECT address_id FROM addresses WHERE country = 'Китай' AND region = 'Ставропольск' AND district = 'Благодарнен' AND city = 'Благодарный'AND street = 'Чапаева' AND house = '228' AND postcode = '356420';
+     
+    -- если адреса нет в addresses
+    INSERT INTO addresses (country, region, district, city, street, house, postcode)
+    VALUES ('Китай', 'Ставропольск', 'Благодарнен', 'Благодарный', 'Чапаева', '228', '356420');
+
+    INSERT INTO suppliers (address_id, company_name, company_status)
+    VALUES ((SELECT address_id FROM addresses WHERE country = 'Китай' AND region = 'Ставропольск' AND district = 'Благодарнен' AND city = 'Благодарный'AND street = 'Чапаева' AND house = '228' AND postcode = '356420'), 'Apple', 'OOO');
+
+    -- если есть
+    INSERT INTO suppliers (address_id, company_name, company_status)
+    VALUES ('12', 'Apple', 'OOO');
+
+
+-- *** КАТЕГОРИИ *** --
+
+-- Добавление новой категории
+INSERT INTO category(category_name, description, features)
+VALUES ('Сыры', 'вававафвфаывафывафывафыва', 'вдофлвоафыовал');
+
+-- Если входит в какую-то категорию (является подкатегорией)
+INSERT INTO category_hierarchy(category_hierarchy_id, subcategory_hierarchy_id)
+VALUES ((SELECT category_id FROM category WHERE category_name = 'молочные продукты'), (SELECT category_id FROM category WHERE category_name = 'Сыры'));
+
+-- Получить конкретную категорию
+SELECT category.category_id, category.category_name, category.description, category.features, (SELECT category.category_name FROM category WHERE category_id = category_hierarchy.category_hierarchy_id) AS parent_category
+FROM category 
+LEFT OUTER JOIN category_hierarchy
+ON category.category_id = category_hierarchy.subcategory_hierarchy_id
+WHERE category.category_id = 2;
+
+-- Удаление конкрентной категории
+DELETE FROM category_hierarchy
+WHERE category_hierarchy_id = 
+
+-- *** Продукты *** --
+
+-- Добавление продукта
+INSERT INTO products (supplier_id, category_id, measure_unit_id, product_name, available, description, storage_conditions)
+VALUES ()
+RETURNING *;
+
+INSERT INTO product_photos(product_id, photo_name, url, alternative_text)
+VALUES ();
+
+-- Получение определенного продукта
+SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name
+FROM products
+LEFT OUTER JOIN suppliers
+ON products.supplier_id = suppliers.supplier_id
+LEFT OUTER JOIN category
+ON products.category_id = category.category_id
+LEFT OUTER JOIN measure_units
+ON products.measure_unit_id = measure_units.measure_unit_id
+WHERE product_id = 2;
+
+SELECT * FROM product_photos
+WHERE product_id = 1;
+
+-- Удаление Продукта
+SELECT photo_name FROM product_photos WHERE product_id = 1;
+
+DELETE FROM product_photos WHERE product_id = 1;
+
+DELETE FROM products WHERE product_id = 1;
+
+
+-- Фильтрация продуктов
+
+    -- По категории
+SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name
+FROM products
+LEFT OUTER JOIN suppliers
+ON products.supplier_id = suppliers.supplier_id
+LEFT OUTER JOIN category
+ON products.category_id = category.category_id
+LEFT OUTER JOIN measure_units
+ON products.measure_unit_id = measure_units.measure_unit_id
+WHERE products.category_id = 9
+OFFSET 0 ROWS
+FETCH FIRST 2 ROW ONLY;
+
+    --По поставщику
+SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name
+FROM products
+LEFT OUTER JOIN suppliers
+ON products.supplier_id = suppliers.supplier_id
+LEFT OUTER JOIN category
+ON products.category_id = category.category_id
+LEFT OUTER JOIN measure_units
+ON products.measure_unit_id = measure_units.measure_unit_id
+WHERE products.category_id = 2
+FETCH FIRST 2 ROW ONLY;
+
+SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name
+FROM products
+LEFT OUTER JOIN suppliers
+ON products.supplier_id = suppliers.supplier_id
+LEFT OUTER JOIN category
+ON products.category_id = category.category_id
+LEFT OUTER JOIN measure_units
+ON products.measure_unit_id = measure_units.measure_unit_id
+WHERE products.supplier_id = 2
+FETCH FIRST 2 ROW ONLY;
+
+SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name
+FROM products
+LEFT OUTER JOIN suppliers
+ON products.supplier_id = suppliers.supplier_id
+LEFT OUTER JOIN category
+ON products.category_id = category.category_id
+LEFT OUTER JOIN measure_units
+ON products.measure_unit_id = measure_units.measure_unit_id
+WHERE products.category_id = 9 AND products.supplier_id = 1
+FETCH FIRST 2 ROW ONLY;
+
+
+SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name
+FROM products
+LEFT OUTER JOIN suppliers
+ON products.supplier_id = suppliers.supplier_id
+LEFT OUTER JOIN category
+ON products.category_id = category.category_id
+LEFT OUTER JOIN measure_units
+ON products.measure_unit_id = measure_units.measure_unit_id
+FETCH FIRST 2 ROW ONLY;
+
+    -- Узнать количество продуктов, удовлетворяющих фильтрации
+SELECT COUNT(*)
+FROM products
+WHERE products.category_id = 9 AND products.supplier_id = 1
