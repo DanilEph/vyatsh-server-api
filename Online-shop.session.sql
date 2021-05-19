@@ -523,7 +523,7 @@ INSERT INTO product_photos(product_id, photo_name, url, alternative_text)
 VALUES ();
 
 -- Получение определенного продукта
-SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name
+SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, products.category_id, category.category_name, suppliers.company_name, measure_units.measure_name
 FROM products
 LEFT OUTER JOIN suppliers
 ON products.supplier_id = suppliers.supplier_id
@@ -531,7 +531,7 @@ LEFT OUTER JOIN category
 ON products.category_id = category.category_id
 LEFT OUTER JOIN measure_units
 ON products.measure_unit_id = measure_units.measure_unit_id
-WHERE product_id = 2;
+WHERE product_id = 3;
 
 SELECT * FROM product_photos
 WHERE product_id = 1;
@@ -607,4 +607,6 @@ FETCH FIRST 2 ROW ONLY;
     -- Узнать количество продуктов, удовлетворяющих фильтрации
 SELECT COUNT(*)
 FROM products
-WHERE products.category_id = 9 AND products.supplier_id = 1
+WHERE products.category_id = 9 AND products.supplier_id = 1;
+
+SELECT category_hierarchy_id FROM category_hierarchy WHERE subcategory_hierarchy_id = 1;

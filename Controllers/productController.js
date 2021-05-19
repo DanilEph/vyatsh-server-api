@@ -45,11 +45,28 @@ class ProductController {
         try {
             const { id } = req.params;
 
-            const queryProductResult = await pool.query("SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id           WHERE product_id = $1", [id]);
+            const queryProductResult = await pool.query("SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, products.category_id, category.category_name, suppliers.company_name, measure_units.measure_name FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id   WHERE product_id = $1", [id]);
 
             const queryPhotoResult = await pool.query("SELECT * FROM product_photos WHERE product_id = $1", [id]);
 
+            console.log(queryProductResult.rows[0].category_id);
+            let endedCategory = queryProductResult.rows[0].category_id;
+            let breadcrumbs = [];
+
+            while (endedCategory != null) {
+                breadcrumbs.push(endedCategory);
+                let category = await pool.query("SELECT category_hierarchy_id FROM category_hierarchy WHERE subcategory_hierarchy_id = $1", [endedCategory]);
+                console.log(category);
+                
+                if (category.rows.length != 0) {
+                    endedCategory = category.rows[0].category_hierarchy_id;
+                } else {
+                    endedCategory = null;
+                }
+            }
+            
             const queryResult = {
+                breadcrumbs: breadcrumbs,
                 product: queryProductResult.rows[0], 
                 photos: queryPhotoResult.rows
             };
@@ -99,7 +116,7 @@ class ProductController {
             queryResult = await pool.query("SELECT products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id OFFSET $1 ROWS FETCH FIRST $2 ROW ONLY", [offset, limit]);            
             
         }
-        
+
         let outInfo = {};
         outInfo.productNamber = productNumber.rows[0].count;
         outInfo.products = queryResult.rows;
