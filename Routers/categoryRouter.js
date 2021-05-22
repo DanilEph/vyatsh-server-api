@@ -1,10 +1,11 @@
 const Router = require('express');
 const router = new Router();
 const categoryController = require('../Controllers/categoryController');
+const roleMiddleware = require('../middleware/roleMiddleware')
 
-router.post('/', categoryController.addNew);
+router.post('/', roleMiddleware(['employee']), categoryController.addNew);
 router.get('/:id', categoryController.get);
 router.get('/', categoryController.getAll);
-router.delete('/:id', categoryController.delete);
+router.delete('/:id', roleMiddleware(['employee']), categoryController.delete);
 
 module.exports = router;

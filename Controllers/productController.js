@@ -15,7 +15,7 @@ class ProductController {
             if (Array.isArray(img)) {
                 img.forEach((element, i) => {
                     let fileName = uuid.v4() + '.png'; 
-                    let filePath = path.resolve(__dirname, '..', 'public', fileName);            
+                    let filePath = path.resolve(__dirname, '..', 'public', 'productPhoto', fileName);            
                     element.mv(filePath);
 
                     let altPhotoText = req.body[i + 1];
@@ -24,7 +24,7 @@ class ProductController {
                 });
             } else {
                 const fileName = uuid.v4() + '.png'; 
-                const filePath = path.resolve(__dirname, '..', 'public', fileName);            
+                const filePath = path.resolve(__dirname, '..', 'public', 'productPhoto', fileName);            
                 img.mv(filePath);
 
                 let altPhotoText = req.body[1];
@@ -130,13 +130,15 @@ class ProductController {
 
             let productPhotos = await pool.query("SELECT photo_name FROM product_photos WHERE product_id = $1;", [id]);
             productPhotos = productPhotos.rows;
+            console.log(productPhotos);
 
             productPhotos.forEach(element => {
                 let fileName = element.photo_name; 
-                let filePath = path.resolve(__dirname, '..', 'public', fileName); 
+                console.log(fileName);
+                let filePath = path.resolve(__dirname, '..', 'public', 'productPhoto', fileName); 
 
                 fs.unlink(filePath, (err) => {
-                    if (err) throw err;              
+                                  
                 });
             });
 
