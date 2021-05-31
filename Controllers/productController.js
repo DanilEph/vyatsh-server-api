@@ -6,11 +6,16 @@ const fs = require('fs');
 class ProductController {
     async addNew(req, res) {
         try {
-            const { supplierId, categoryId, measureUnitId, productName, available, description, storageConditions } = req.body;
+            const { supplierId, categoryId, measureUnitId, productName, available, description, storageConditions, price, pricePeriodName } = req.body;
             const { img } = req.files;
 
             const returnData = await pool.query("INSERT INTO products (supplier_id, category_id, measure_unit_id, product_name, available, description, storage_conditions) VALUES ($1, $2, $3, $4, $5, $6, $7)  RETURNING *;", [supplierId, categoryId, measureUnitId, productName, available, description, storageConditions]);
             const productId = returnData.rows[0].product_id;
+
+            const returnPricePeriod = await pool.query("INSERT INTO price_periods(price_period_name, start_date) VALUES($1, CURRENT_DATE) RETURNING *", [pricePeriodName]);
+            const productPricePeriod = returnPricePeriod.rows[0].price_period_id;
+
+            await pool.query("INSERT INTO price_lists(price_period_id, product_id, price) VALUES($1, $2, $3)", [productPricePeriod, productId, price]);
 
             if (Array.isArray(img)) {
                 img.forEach((element, i) => {
@@ -95,25 +100,25 @@ class ProductController {
 
             productNumber = await pool.query("SELECT COUNT(*) FROM products WHERE products.category_id = $1 AND products.supplier_id = $2", [categoryId, supplierId]); 
 
-            queryResult = await pool.query("SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, price_lists.price FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id LEFT OUTER JOIN product_photos ON products.product_id = product_photos.product_id LEFT OUTER JOIN (SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date FROM price_lists INNER JOIN price_periods ON price_lists.price_period_id = price_periods.price_period_id ORDER BY price_periods.start_date DESC) AS price_lists ON products.product_id = price_lists.product_id WHERE products.category_id = $1 AND products.supplier_id = $2 OFFSET $3 ROWS FETCH FIRST $4 ROW ONLY", [categoryId, supplierId, offset, limit]);          
+            queryResult = await pool.query("SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, concat(price_lists.price::NUMERIC::INT, ' руб') AS price FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id LEFT OUTER JOIN product_photos ON products.product_id = product_photos.product_id LEFT OUTER JOIN (SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date FROM price_lists INNER JOIN price_periods ON price_lists.price_period_id = price_periods.price_period_id ORDER BY price_periods.start_date DESC) AS price_lists ON products.product_id = price_lists.product_id WHERE products.category_id = $1 AND products.supplier_id = $2 OFFSET $3 ROWS FETCH FIRST $4 ROW ONLY", [categoryId, supplierId, offset, limit]);          
             
         } else if (categoryId && !supplierId) {
 
             productNumber = await pool.query("SELECT COUNT(*) FROM products WHERE products.category_id = $1", [categoryId]); 
 
-            queryResult = await pool.query("SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, price_lists.price FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id LEFT OUTER JOIN product_photos ON products.product_id = product_photos.product_id LEFT OUTER JOIN (SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date FROM price_lists INNER JOIN price_periods ON price_lists.price_period_id = price_periods.price_period_id ORDER BY price_periods.start_date DESC) AS price_lists ON products.product_id = price_lists.product_id WHERE products.category_id = $1 OFFSET $2 ROWS FETCH FIRST $3 ROW ONLY", [categoryId, offset, limit]);
+            queryResult = await pool.query("SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, concat(price_lists.price::NUMERIC::INT, ' руб') AS price FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id LEFT OUTER JOIN product_photos ON products.product_id = product_photos.product_id LEFT OUTER JOIN (SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date FROM price_lists INNER JOIN price_periods ON price_lists.price_period_id = price_periods.price_period_id ORDER BY price_periods.start_date DESC) AS price_lists ON products.product_id = price_lists.product_id WHERE products.category_id = $1 OFFSET $2 ROWS FETCH FIRST $3 ROW ONLY", [categoryId, offset, limit]);
             
         } else if (!categoryId && supplierId) {
 
             productNumber = await pool.query("SELECT COUNT(*) FROM products WHERE products.supplier_id = $1", [supplierId]); 
 
-            queryResult = await pool.query("SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, price_lists.price FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id LEFT OUTER JOIN product_photos ON products.product_id = product_photos.product_id LEFT OUTER JOIN (SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date FROM price_lists INNER JOIN price_periods ON price_lists.price_period_id = price_periods.price_period_id ORDER BY price_periods.start_date DESC) AS price_lists ON products.product_id = price_lists.product_id WHERE products.supplier_id = $1 OFFSET $2 ROWS FETCH FIRST $3 ROW ONLY", [supplierId, offset, limit]);
+            queryResult = await pool.query("SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, concat(price_lists.price::NUMERIC::INT, ' руб') AS price FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id LEFT OUTER JOIN product_photos ON products.product_id = product_photos.product_id LEFT OUTER JOIN (SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date FROM price_lists INNER JOIN price_periods ON price_lists.price_period_id = price_periods.price_period_id ORDER BY price_periods.start_date DESC) AS price_lists ON products.product_id = price_lists.product_id WHERE products.supplier_id = $1 OFFSET $2 ROWS FETCH FIRST $3 ROW ONLY", [supplierId, offset, limit]);
                         
         } else if (!categoryId && !supplierId) {
 
             productNumber = await pool.query("SELECT COUNT(*) FROM products"); 
 
-            queryResult = await pool.query("SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, price_lists.price FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id LEFT OUTER JOIN product_photos ON products.product_id = product_photos.product_id LEFT OUTER JOIN (SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date FROM price_lists INNER JOIN price_periods ON price_lists.price_period_id = price_periods.price_period_id ORDER BY price_periods.start_date DESC) AS price_lists ON products.product_id = price_lists.product_id OFFSET $1 ROWS FETCH FIRST $2 ROW ONLY", [offset, limit]);            
+            queryResult = await pool.query("SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, concat(price_lists.price::NUMERIC::INT, ' руб') AS price FROM products LEFT OUTER JOIN suppliers ON products.supplier_id = suppliers.supplier_id LEFT OUTER JOIN category ON products.category_id = category.category_id LEFT OUTER JOIN measure_units ON products.measure_unit_id = measure_units.measure_unit_id LEFT OUTER JOIN product_photos ON products.product_id = product_photos.product_id LEFT OUTER JOIN (SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date FROM price_lists INNER JOIN price_periods ON price_lists.price_period_id = price_periods.price_period_id ORDER BY price_periods.start_date DESC) AS price_lists ON products.product_id = price_lists.product_id OFFSET $1 ROWS FETCH FIRST $2 ROW ONLY", [offset, limit]);            
             
         }
 
@@ -130,11 +135,9 @@ class ProductController {
 
             let productPhotos = await pool.query("SELECT photo_name FROM product_photos WHERE product_id = $1;", [id]);
             productPhotos = productPhotos.rows;
-            console.log(productPhotos);
 
             productPhotos.forEach(element => {
                 let fileName = element.photo_name; 
-                console.log(fileName);
                 let filePath = path.resolve(__dirname, '..', 'public', 'productPhoto', fileName); 
 
                 fs.unlink(filePath, (err) => {
@@ -143,6 +146,17 @@ class ProductController {
             });
 
             await pool.query("DELETE FROM product_photos WHERE product_id = $1", [id]);
+
+            let pricePeriodId = await pool.query("SELECT price_period_id FROM price_lists WHERE product_id = $1", [id]);
+                
+            if (pricePeriodId.rows[0] != null) {
+                pricePeriodId = pricePeriodId.rows[0].price_period_id;
+
+                await pool.query("DELETE FROM price_lists WHERE product_id = $1", [id]);
+    
+                await pool.query("DELETE FROM price_periods WHERE price_period_id = $1", [pricePeriodId]);
+            }
+
             await pool.query("DELETE FROM products WHERE product_id = $1", [id]);
 
             res.status(200).json({message: 'Данный продукт был успешно удален!'});

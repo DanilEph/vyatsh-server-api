@@ -615,7 +615,7 @@ SELECT category_hierarchy_id FROM category_hierarchy WHERE subcategory_hierarchy
 
 SELECT * FROM product_photos WHERE product_id = 19  LIMIT 1;
 
-SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, price_lists.price
+SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, concat(price_lists.price::NUMERIC::INT, ' руб')
 FROM products 
 LEFT OUTER JOIN suppliers 
 ON products.supplier_id = suppliers.supplier_id 
@@ -633,8 +633,8 @@ LEFT OUTER JOIN (
     ORDER BY price_periods.start_date DESC
 ) AS price_lists
 ON products.product_id = price_lists.product_id
-WHERE products.category_id = $1 AND products.supplier_id = $2 
-OFFSET $2 ROWS FETCH FIRST $3 ROW ONLY;
+-- WHERE products.category_id = $1 AND products.supplier_id = $2 
+-- OFFSET $2 ROWS FETCH FIRST $3 ROW ONLY;
 
 
 SELECT price_lists.price, price_periods.start_date, price_periods.end_date
@@ -652,10 +652,13 @@ ON price_lists.price_period_id = price_periods.price_period_id
 ORDER BY price_periods.start_date DESC;
 
 INSERT INTO price_periods(price_period_name, start_date)
-VALUES('Первые цены', CURRENT_DATE);
+VALUES('Вторые цены', CURRENT_DATE)
+RETURNING *;
 
 INSERT INTO price_lists(price_period_id, product_id, price)
-VALUES(2, 19, 40);
+VALUES(2, 19, 604);
 
 SELECT * FROM price_lists; 
 SELECT * FROM price_periods; 
+
+SELECT price::NUMERIC FROM price_lists;
