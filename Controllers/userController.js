@@ -36,6 +36,21 @@ class userController {
         }
 
     }
+
+    async check(req, res) {
+        const data = req.user;
+        const token = jwt.sign({
+            userID: data.userID,
+            login: data.login,
+            role: data.role
+
+        }, keys.jwt, {expiresIn: 60 * 60});
+
+        res.json({
+            token: `Bearer ${token}`,
+            massage: 'Проверка прошла успешно!'
+        });
+    }
 }
 
 module.exports = new userController();

@@ -610,3 +610,52 @@ FROM products
 WHERE products.category_id = 9 AND products.supplier_id = 1;
 
 SELECT category_hierarchy_id FROM category_hierarchy WHERE subcategory_hierarchy_id = 1;
+
+--------
+
+SELECT * FROM product_photos WHERE product_id = 19  LIMIT 1;
+
+SELECT DISTINCT ON (products.product_id) products.product_id, products.product_name, products.available, products.description, products.storage_conditions, category.category_name, suppliers.company_name, measure_units.measure_name, product_photos.photo_name, price_lists.price
+FROM products 
+LEFT OUTER JOIN suppliers 
+ON products.supplier_id = suppliers.supplier_id 
+LEFT OUTER JOIN category 
+ON products.category_id = category.category_id 
+LEFT OUTER JOIN measure_units 
+ON products.measure_unit_id = measure_units.measure_unit_id
+LEFT OUTER JOIN product_photos 
+ON products.product_id = product_photos.product_id
+LEFT OUTER JOIN (
+    SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date
+    FROM price_lists
+    INNER JOIN price_periods
+    ON price_lists.price_period_id = price_periods.price_period_id
+    ORDER BY price_periods.start_date DESC
+) AS price_lists
+ON products.product_id = price_lists.product_id
+WHERE products.category_id = $1 AND products.supplier_id = $2 
+OFFSET $2 ROWS FETCH FIRST $3 ROW ONLY;
+
+
+SELECT price_lists.price, price_periods.start_date, price_periods.end_date
+FROM price_lists
+INNER JOIN price_periods
+ON price_lists.price_period_id = price_periods.price_period_id
+WHERE price_lists.product_id = 17
+ORDER BY price_periods.start_date DESC
+LIMIT 1;
+
+SELECT price_lists.price_list_id, price_lists.product_id, price_lists.price, price_periods.start_date, price_periods.end_date
+FROM price_lists
+INNER JOIN price_periods
+ON price_lists.price_period_id = price_periods.price_period_id
+ORDER BY price_periods.start_date DESC;
+
+INSERT INTO price_periods(price_period_name, start_date)
+VALUES('Первые цены', CURRENT_DATE);
+
+INSERT INTO price_lists(price_period_id, product_id, price)
+VALUES(2, 19, 40);
+
+SELECT * FROM price_lists; 
+SELECT * FROM price_periods; 

@@ -37,7 +37,7 @@ class EmployeeController {
         try {
             const { country, region, disrict, city, street, house, postcode } = req.body.address;
             const { first_name, last_name, patronymic, gender, email, phone } = req.body.personData;
-            const userID = req.user;
+            const userID = req.user.userID;
 
             const resulQuery = await pool.query("SELECT address_id FROM employees WHERE authorization_data_id = $1", [userID]);
             const { address_id } = resulQuery.rows[0];
@@ -64,7 +64,7 @@ class EmployeeController {
 
     async get(req, res) {
         try {
-            const userID = req.user;
+            const userID = req.user.userID;
 
             const resultQuery = await pool.query("SELECT employees.employee_id, positions.position_name, employees.first_name, employees.last_name, employees.patronymic, employees.gender, employees.email, employees.phone, authorization_data.login, authorization_data.hashpass, authorization_data.salt, authorization_data.role, authorization_data.registration_date, authorization_data.last_authorization_date FROM employees INNER JOIN authorization_data ON employees.authorization_data_id = authorization_data.authorization_data_id INNER JOIN positions ON employees.position_id = positions.position_id WHERE employees.authorization_data_id = $1", [userID]);
 
@@ -78,7 +78,7 @@ class EmployeeController {
 
     async delete(req, res) {
         try {
-            const userID = req.user;
+            const userID = req.user.userID;
 
             await pool.query("DELETE FROM addresses WHERE address_id = (SELECT address_id FROM employees WHERE authorization_data_id = $1)", [userID]);
 

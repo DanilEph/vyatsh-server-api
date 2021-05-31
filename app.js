@@ -3,8 +3,9 @@ const app = express();
 const fileUpload = require('express-fileupload');
 const router = require('./Routers/index');
 const path = require('path');
+const cors = require('cors');
 
-
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.relative(__dirname, 'public')));
 app.use(fileUpload({}));
